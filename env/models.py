@@ -15,8 +15,8 @@ from openenv.core.env_server.types import Action, Observation
 class AutomathreasonerAction(Action):
     """Action for the AutoMathReasoner environment - containing reasoning and final answer."""
 
-    reasoning: str = Field(..., description="The step-by-step mathematical reasoning.")
-    final_answer: str = Field(..., description="The final numerical or algebraic answer.")
+    reasoning: str = Field(default="", description="The step-by-step mathematical reasoning.")
+    final_answer: str = Field(default="", description="The final numerical or algebraic answer.")
 
 
 class AutomathreasonerObservation(Observation):
