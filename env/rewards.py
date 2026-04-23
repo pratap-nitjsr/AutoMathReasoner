@@ -35,7 +35,7 @@ class RewardSystem:
         optimal_tokens = 50.0  # Assumed ideal length
         
         # Ratio mapping constraint
-        ratio = max(0.0, (approx_tokens - optimal_tokens) / optimal_tokens)
+        ratio = (approx_tokens - optimal_tokens) / optimal_tokens
         
         # Smooth gaussian-like decay towards -1.0
         e = math.exp(- (ratio ** 2)) - 1.0

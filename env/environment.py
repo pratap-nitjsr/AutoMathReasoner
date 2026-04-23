@@ -35,6 +35,7 @@ class AutomathreasonerEnvironment(Environment):
         # Current problem state
         self.current_problem = ""
         self.current_solution = ""
+        self.current_sympy_f = None  # Integration Ground Truth
         self.times_seen_problem = 0
         self.history: List[Dict[str, Any]] = []
         self.max_steps = 3
@@ -58,6 +59,7 @@ class AutomathreasonerEnvironment(Environment):
         
         self.current_problem = task['problem']
         self.current_solution = task['solution']
+        self.current_sympy_f = task.get('sympy_f')
         # The generator returns its own continuous difficulty score; we'll expose the target difficulty band
         self.times_seen_problem = 0
         self.history = []
@@ -74,7 +76,12 @@ class AutomathreasonerEnvironment(Environment):
         self._state.step_count += 1
         
         # Verification
-        c, q, p_sup, r_ref = self.verifier.verify(action.reasoning, action.final_answer, self.current_solution)
+        c, q, p_sup, r_ref = self.verifier.verify(
+            action.reasoning, 
+            action.final_answer, 
+            self.current_solution,
+            sympy_f=self.current_sympy_f
+        )
         
         # Reward
         action_str = f"{action.reasoning} \n {action.final_answer}"

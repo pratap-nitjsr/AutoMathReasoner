@@ -1,121 +1,96 @@
+import sympy as sp
 import random
 from typing import Dict, Any, Tuple
 
 class TaskGenerationEngine:
     def __init__(self):
-        # Templates for different types of problems
-        self.arithmetic_templates = [
-            "What is {a} + {b}?",
-            "Calculate {a} - {b}.",
-            "Find the product of {a} and {b}.",
-            "What is {a} divided by {b}?"
-        ]
-        self.algebra_templates = [
-            "Solve for x: {a}x + {b} = {c}",
-            "If {a}y - {b} = {c}, what is y?"
-        ]
-        self.word_problem_templates = [
-            "John has {a} apples. He buys {b} more. Then he gives away {c}. How many apples does John have now?",
-            "A train travels at {a} km/h for {b} hours. How far does it travel?"
+        self.x = sp.Symbol('x')
+        # Components for generating random functions F(x)
+        self.basic_functions = [
+            lambda x, c: x**c,
+            lambda x, c: sp.sin(c*x),
+            lambda x, c: sp.cos(c*x),
+            lambda x, c: sp.exp(c*x),
+            lambda x, c: sp.ln(sp.Abs(c*x))
         ]
 
-    def _score_difficulty(self, steps: int, complexity: int, operations: int) -> float:
-        """
-        D = steps_required + number_complexity + operations_count
-        """
-        return float(steps + complexity + operations)
+    def _score_difficulty(self, components: int, nesting: int) -> float:
+        """D = num_components + degree_of_nesting * 2"""
+        return float(components + nesting * 2.0)
 
-    def generate_arithmetic(self, complexity: int) -> Tuple[str, float, str]:
-        a = random.randint(1 * complexity, 10 * complexity)
-        b = random.randint(1 * complexity, 10 * complexity)
-        op = random.choice(['+', '-', '*', '/'])
+    def generate_random_function(self, complexity: int) -> Tuple[Any, float]:
+        """Generates a random F(x)."""
+        num_components = max(1, int(complexity / 2))
+        nesting = max(0, int(complexity / 4))
         
-        operations = 1
-        steps = 1
-        
-        if op == '+':
-            problem = f"What is {a} + {b}?"
-            answer = str(a + b)
-        elif op == '-':
-            problem = f"Calculate {a} - {b}."
-            answer = str(a - b)
-        elif op == '*':
-            problem = f"Find the product of {a} and {b}."
-            answer = str(a * b)
-        elif op == '/':
-            # Ensure divisible
-            b = max(1, b)
-            a = a * b
-            problem = f"What is {a} divided by {b}?"
-            answer = str(a // b)
+        f_expr = 0
+        for _ in range(num_components):
+            comp_func = random.choice(self.basic_functions)
+            coeff = random.randint(1, 5)
+            term = comp_func(self.x, coeff)
             
-        difficulty = self._score_difficulty(steps, complexity, operations)
-        return problem, difficulty, answer
-
-    def generate_algebra(self, complexity: int) -> Tuple[str, float, str]:
-        a = random.randint(1, 5 * complexity)
-        x = random.randint(1, 10)
-        b = random.randint(1, 10 * complexity)
-        op = random.choice(['+', '-'])
-        
-        operations = 2
-        steps = 2
-        
-        if op == '+':
-            c = a * x + b
-            problem = f"Solve for x: {a}x + {b} = {c}"
-        else:
-            c = a * x - b
-            problem = f"If {a}x - {b} = {c}, what is x?"
+            # Apply nesting
+            for _ in range(nesting):
+                outer = random.choice(self.basic_functions)
+                term = outer(term, 1)
             
-        answer = str(x)
-        difficulty = self._score_difficulty(steps, complexity, operations)
-        return problem, difficulty, answer
-
-    def generate_word_problem(self, complexity: int) -> Tuple[str, float, str]:
-        t = random.choice([0, 1])
-        operations = 2
-        steps = 2
-        
-        if t == 0:
-            a = random.randint(5 * complexity, 15 * complexity)
-            b = random.randint(2 * complexity, 10 * complexity)
-            c = random.randint(1, a + b)
-            problem = f"John has {a} apples. He buys {b} more. Then he gives away {c}. How many apples does John have now?"
-            answer = str(a + b - c)
-        else:
-            a = random.randint(20 * complexity, 60 * complexity)
-            b = random.randint(1, 5 * complexity)
-            problem = f"A train travels at {a} km/h for {b} hours. How far does it travel?"
-            answer = str(a * b)
-            operations = 1
-            steps = 1
+            f_expr += random.randint(1, 10) * term
             
-        difficulty = self._score_difficulty(steps, complexity, operations)
-        return problem, difficulty, answer
+        return f_expr, self._score_difficulty(num_components, nesting)
 
     def generate_task(self, target_difficulty_band: float) -> Dict[str, Any]:
-        """
-        Generate a task targeting a general difficulty band.
-        target_difficulty_band can guide the complexity parameter.
-        """
-        complexity = max(1, int(target_difficulty_band / 2))
+        """Provides an indefinite integral task."""
+        complexity = max(1, int(target_difficulty_band))
         
-        prob_type = random.choices(
-            ['arithmetic', 'algebra', 'word_problem'], 
-            weights=[1, max(0.5, complexity-1), max(0.5, complexity-1)]
-        )[0]
+        # 1. Generate F(x)
+        F_expr, diff = self.generate_random_function(complexity)
         
-        if prob_type == 'arithmetic':
-            problem, diff, ans = self.generate_arithmetic(complexity)
-        elif prob_type == 'algebra':
-            problem, diff, ans = self.generate_algebra(complexity)
-        else:
-            problem, diff, ans = self.generate_word_problem(complexity)
-            
+        # 2. Differentiate to get the problem f(x)
+        f_expr = sp.diff(F_expr, self.x)
+        
+        # 3. Format strings
+        problem_text = f"Find the indefinite integral: \int ({sp.pretty(f_expr)}) dx"
+        solution_text = f"{sp.simplify(F_expr)} + C"
+        
         return {
-            "problem": problem,
+            "problem": problem_text,
             "difficulty": diff,
-            "solution": ans,
-            "type": prob_type
+            "solution": solution_text,
+            "type": "integration",
+            "sympy_F": F_expr,
+            "sympy_f": f_expr
         }
+
+    def generate_variants(self, task: Dict[str, Any], count: int = 2) -> list[Dict[str, Any]]:
+        """
+        LADDER Component: Recursive Decomposition for Integration.
+        Breaks down sums or simplifies coefficients.
+        """
+        variants = []
+        F_expr = task.get("sympy_F")
+        
+        if F_expr is None:
+             # Fallback if task was not generated by us
+             return [self.generate_task(max(1, task.get("difficulty", 2) - 2))]
+
+        # Recursive Rule 1: Linearity (split sums)
+        if isinstance(F_expr, sp.Add):
+            args = F_expr.args
+            for arg in args[:count]:
+                sub_F = arg
+                sub_f = sp.diff(sub_F, self.x)
+                variants.append({
+                    "problem": f"Integrate step-variant: \int ({sp.pretty(sub_f)}) dx",
+                    "solution": f"{sub_F} + C",
+                    "difficulty": task["difficulty"] - 1.0,
+                    "type": "integration",
+                    "sympy_F": sub_F,
+                    "sympy_f": sub_f
+                })
+
+        # Recursive Rule 2: Constant simplification
+        if not variants:
+            # Just return a simpler integral by reducing difficulty
+            variants.append(self.generate_task(max(1.0, task["difficulty"] - 2.0)))
+
+        return variants[:count]

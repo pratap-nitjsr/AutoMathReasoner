@@ -96,13 +96,48 @@ class VerifierSystem:
                 
         return score
 
-    def verify(self, reasoning: str, prediction: str, ground_truth: str) -> Tuple[float, float, float, float]:
+    def check_numerical_integration(self, prediction: str, sympy_f: Any) -> bool:
+        """
+        [PAPER TRACEABILITY: Section 3.1.3 Solution Verification]
+        Numerical multi-point quadrature verification.
+        Instead of evaluating integrals, we differentiate the prediction F_pred(x)
+        and compare it to the ground truth integrand f(x) at 5 random points.
+        """
+        import sympy as sp
+        import random
+        x = sp.Symbol('x')
+        try:
+            # Clean prediction string
+            clean_pred = prediction.strip()
+            if "Answer:" in clean_pred:
+                clean_pred = clean_pred.split("Answer:")[-1].strip()
+            clean_pred = clean_pred.replace("+ C", "").replace("+C", "").strip()
+            
+            F_pred = sp.parse_expr(clean_pred)
+            f_pred = sp.diff(F_pred, x)
+            
+            # Evaluate at 5 random points
+            for _ in range(5):
+                test_point = random.uniform(-5, 5)
+                p_val = float(f_pred.subs(x, test_point).evalf())
+                t_val = float(sympy_f.subs(x, test_point).evalf())
+                
+                # Paper uses 10^-2 relative tolerance
+                if not math.isclose(p_val, t_val, rel_tol=1e-2, abs_tol=1e-2):
+                    return False
+            return True
+        except Exception:
+            return False
+
+    def verify(self, reasoning: str, prediction: str, ground_truth: str, sympy_f: Any = None) -> Tuple[float, float, float, float]:
         """
         Run all verifiers. 
         Returns Correctness (C), Reasoning Quality (Q), Process Supervision (P), and Reflection (R).
         """
         c = 0.0
         if self.check_exact_match(prediction, ground_truth):
+            c = 1.0
+        elif sympy_f is not None and self.check_numerical_integration(prediction, sympy_f):
             c = 1.0
         elif self.check_numeric_tolerance(prediction, ground_truth):
             c = 1.0
