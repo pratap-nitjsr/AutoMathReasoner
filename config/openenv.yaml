@@ -1,0 +1,16 @@
+env:
+  name: "AutoMathReasoner"
+  author: "Meta Hackathon User"
+  description: "A self-improving math reasoning environment that dynamically generates tasks, tracking accuracy to provide curriculum learning for RL agents."
+  version: "1.0.0"
+
+server:
+  host: "0.0.0.0"
+  port: 7860
+  workers: 4
+  module: "server.app:app"
+
+features:
+  multi_reward: true
+  prevent_hacking: true
+  curriculum_scheduler: true
