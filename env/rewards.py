@@ -102,9 +102,14 @@ class RewardSystem:
         # Smoothly squish reasoning quality using tanh to bound its impact
         q_smooth = math.tanh(q)
         
-        # New Composite Reward Equation
-        total_r = (0.35 * c) + (0.15 * q_smooth) + (0.1 * process_supervision) + (0.1 * reflection_score) + (0.15 * d) + (0.05 * e) + (0.1 * x) + noise
+        # Normalize variables mapping entirely into the [0, 1] domain
+        p_norm = (process_supervision + 1.0) / 2.0  # Scales [-1, 1] to [0, 1]
+        r_norm = (reflection_score + 0.5) / 1.5     # Scales [-0.5, 1.0] to [0, 1]
+        q_norm = min(1.0, max(0.0, q_smooth))
         
+        # New Simplified Composite Reward Equation (Strictly bounded [0, 1])
+        # Base coefficients sum exactly to 1.0. Noise is removed to satisfy bounds.
+        total_r = (0.4 * c) + (0.3 * q_norm) + (0.2 * p_norm) + (0.1 * r_norm)
         components = {
             "total_reward": total_r,
             "C_correctness": c,

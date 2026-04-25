@@ -208,11 +208,59 @@ def main():
     print("Starting LADDER Training (Curriculum: Recursive Variant Trees)...")
     trainer.train()
     
+    # Generate Training Charts
+    try:
+        import matplotlib.pyplot as plt
+        import os
+        
+        os.makedirs("outputs_math/plots", exist_ok=True)
+        history = trainer.state.log_history
+        
+        # Plot Loss
+        losses = [x["loss"] for x in history if "loss" in x]
+        steps = [x["step"] for x in history if "loss" in x]
+        if losses:
+            plt.figure(figsize=(10, 6))
+            plt.plot(steps, losses, marker="o", color="blue", linewidth=2)
+            plt.title("GRPO Training Loss Over Steps")
+            plt.xlabel("Steps")
+            plt.ylabel("Loss")
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.savefig("outputs_math/plots/training_loss.png")
+            plt.close()
+            
+        # Plot Rewards
+        rewards = [x["reward"] for x in history if "reward" in x]
+        r_steps = [x["step"] for x in history if "reward" in x]
+        if rewards:
+            plt.figure(figsize=(10, 6))
+            plt.plot(r_steps, rewards, marker="x", color="green", linewidth=2)
+            plt.title("Average Completion Reward Over Steps")
+            plt.xlabel("Steps")
+            plt.ylabel("Rewards")
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.savefig("outputs_math/plots/reward.png")
+            plt.close()
+            
+        # Plot KL Divergence
+        kl = [x["kl"] for x in history if "kl" in x]
+        kl_steps = [x["step"] for x in history if "kl" in x]
+        if kl:
+            plt.figure(figsize=(10, 6))
+            plt.plot(kl_steps, kl, marker="^", color="red", linewidth=2)
+            plt.title("KL Divergence (Policy vs Reference)")
+            plt.xlabel("Steps")
+            plt.ylabel("KL Divergence")
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.savefig("outputs_math/plots/kl_divergence.png")
+            plt.close()
+            
+        print(f"✅ Generated training metric plots in 'outputs_math/plots' directory.")
+    except Exception as e:
+        print(f"Could not generate plots: {e}")
+    
     # Showcase TTRL
     run_ttrl(model, tokenizer, "If 4(x+2) - 10 = 14, what is x?", env)
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
