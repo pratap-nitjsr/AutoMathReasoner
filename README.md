@@ -19,11 +19,13 @@ pinned: false
 The environment implements several advanced logic-steering protocols to ensure convergence on complex mathematical primitives.
 
 ### 1. Recursive Difficulty Ascent (LADDER)
-The system employs a **Recursive Task Decompositon** mechanism where a failure on a parent task $\mathcal{T}_p$ triggers a search for a solvable basis $\{\mathcal{T}_1, \dots, \mathcal{T}_k\}$. 
+The system employs a **Recursive Task Decomposition** mechanism where a failure on a parent task $\mathcal{T}_p$ triggers a search for a solvable basis $\{\mathcal{T}_1, \dots, \mathcal{T}_k\}$.
 
 Given a complexity operator $\Phi$, we satisfy:
+
 $$\Phi(\mathcal{T}_p) = \sum_{i=1}^n \omega_i \Phi(\mathcal{T}_i)$$
-Where variants $\mathcal{T}_i$ represent "stepping stones" that allow the policy to acquire base-identities before attempting the coupled root problem.
+
+Where variants $\mathcal{T}_i$ represent "stepping stones" that allow the policy to acquire base identities before attempting the coupled root problem.
 
 ### 2. Test-Time Adaptive Policy (TTRL)
 For "truly difficult" integrals at the boundary of the model's current capability, the system supports **Inference-Time Group Optimization**. When presented with a novel hard task $\mathcal{G}$, the model:
@@ -32,16 +34,17 @@ For "truly difficult" integrals at the boundary of the model's current capabilit
 3. Cold-starts the final inference on $\mathcal{G}$ with the adapted policy weights.
 
 Mathematically, we solve for an optimal local parameter shift:
-$$\theta^* = \arg \max_{\theta'} \mathbb{E}_{\mathcal{T} \sim \text{variants}(\mathcal{G})} [ R(\tau, \pi_{\theta'}) ]$$
+
+$$\theta^* = \arg \max_{\theta'} \mathbb{E}_{\mathcal{T} \sim \text{variants}(\mathcal{G})} \left[ R(\tau, \pi_{\theta'}) \right]$$
 
 ### 3. Process-Aware Reward Shaping
-Unlike binary "sparse" reward systems, we employ **Dense Process Supervision**. Every primitive transformation (e.g. $u$-substitution, integration by parts) is identified as a logical node. 
+Unlike binary "sparse" reward systems, we employ **Dense Process Supervision**. Every primitive transformation (e.g. $u$-substitution, integration by parts) is identified as a logical node.
 
 The reward $R_{\text{shape}}$ is assigned as the line integral over the reasoning trajectory $\tau$:
 $$R_{\text{shape}} = \int_{\tau} \Psi(\mathbf{z}) d\mathbf{z}$$
 where $\Psi$ evaluates the structural validity of each state transition relative to the ground-truth simplification steps.
 
-### 4. Hard Negative mining (Problem Persistence)
+### 4. Hard Negative Mining (Problem Persistence)
 Failed tasks $\mathcal{T}_{fail}$ are not discarded. They are prioritized in the sampling buffer with a weight $W$ proportional to their failure frequency:
 $$W(\mathcal{T}) \propto e^{\lambda \cdot \text{failures}(\mathcal{T})}$$
 This forces the policy to repeatedly encounter "bottleneck" logic until the primitive is solved.
@@ -76,7 +79,7 @@ graph TD
 
 ---
 
-## 🏗️ Systemic Logic: Recursive Difficulty Ascent
+## 🔁 Systemic Logic: Recursive Difficulty Ascent
 
 The environment operates via **Autonomous Difficulty Scaling**. Instead of fixed-difficulty benchmarks, a problem $\mathcal{T}$ is decomposed into a hierarchical tree of simpler primitives. For any parent problem $\mathcal{T}_{\text{p}}$ that fails to elicit a reward, the system generates a set of variants $\{\mathcal{T}_i\}$ such that the complexity metric $\mathcal{M}$ satisfies:
 
@@ -90,14 +93,14 @@ This ensures a continuous gradient for the learner, moving from fundamental alge
 
 The terminal reward $R_{\Sigma}$ is a weighted composite of seven distinct mathematical and structural signals, designed to penalize hacking and reward rigorous proof-like trajectories:
 
-$$R_{\Sigma} = \alpha C + \beta Q + \gamma P + \delta R_{\text{ref}} + \eta D + \zeta E + \lambda X + \epsilon$$
+$$R_{\Sigma} = \alpha C + \beta Q + \gamma P + \delta R_{\text{ref}} + \eta D + \zeta E + \lambda X$$
 
 Where the weights are calibrated as $\alpha=0.35, \beta=0.15, \gamma=0.1, \delta=0.1, \eta=0.15, \zeta=0.05, \lambda=0.1$.
 
 ### 1. Fundamental Correctness ($C$)
 Derived from the **Numerical Multi-point Quadrature Protocol**. A predicted solution $F_{\theta}(x)$ is verified against the target integrand $f(x)$ through the derivative identity:
 
-$$C = \begin{cases} 1.0 & \text{if } \forall x_i \in \mathbb{X}, \quad | \frac{d}{dx}F_{\theta}(x_i) - f(x_i) | < 10^{-2} \\ 0.0 & \text{otherwise} \end{cases}$$
+$$C = \begin{cases} 1.0 & \text{if } \forall x_i \in \mathbb{X}, \quad \left| \frac{d}{dx}F_{\theta}(x_i) - f(x_i) \right| < 10^{-2} \\ 0.0 & \text{otherwise} \end{cases}$$
 
 Where $\mathbb{X} = \{x_1, \dots, x_5\}$ is a set of random points sampled from $\mathcal{U}(-5, 5)$.
 
